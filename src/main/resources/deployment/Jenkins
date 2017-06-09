@@ -1,0 +1,14 @@
+#Propagate build envrionment variables:
+mvn=/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/Maven3.3.9/bin/mvn
+docker=/var/jenkins_home/tools/org.jenkinsci.plugins.docker.commons.tools.DockerTool/Docker/bin/docker
+
+
+#Execute shell
+
+$mvn package
+
+cp $WORKSPACE/src/main/resources/deployment/Dockerfile $WORKSPACE/target/
+
+cp $WORKSPACE/src/main/resources/deployment/ansible.yml $WORKSPACE/target/
+
+ansible-playbook $WORKSPACE/target/ansible.yml
