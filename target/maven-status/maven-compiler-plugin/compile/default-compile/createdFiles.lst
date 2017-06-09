@@ -1,7 +1,0 @@
-com\cly\security\server\rest\service\User.class
-com\cly\security\server\rest\service\SessionUserInfo.class
-com\cly\cloud\security\service\app\UserRest.class
-com\cly\cloud\security\service\app\Application.class
-com\cly\security\service\impl\UserInfoImpl.class
-com\cly\security\service\impl\LDAPUserInfoService.class
-com\cly\security\server\SecurityServiceMgr.class
