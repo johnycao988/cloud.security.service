@@ -25,5 +25,7 @@
     shell: cd /home/jenkins/cloud.security.service.tmp && docker build -t cloud.security.service .
   
   - name: Run Cloud security service containers...
-    shell: docker run -d --name cloud.security.service -p 3089:3089 -e CONFIG.SERVER.ROOT=/AppConfig/test -e CONFIG.SERVER.URL=http://10.39.101.226:8080/GetConfigFile -e CLOUD.CONFIG.SERVICE.AUTH.CODE=config.auth.code:001 -e SERVICE_NAME=cloud.security.service -e SERVICE_TAGS=test --restart=always cloud.security.service
+    shell: docker run -d --name cloud.security.service -p 3089:3089 -e CLOUD.CONFIG.ROOT.PATH=/AppConfig/test -e CLOUD.CONFIG.SERVICE.URL=http://10.39.101.226:8080/GetConfigFile -e CLOUD.CONFIG.SERVICE.AUTH.CODE=config.auth.code:001 -e SERVICE_NAME=cloud.security.service -e SERVICE_TAGS=test --restart=always cloud.security.service
+    
+ 
  
