@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: cloud.security.service
+   
+CLOUD:
+  CONFIG:
+    SERVICE:
+      AUTH:
+        CODE: ${CLOUD.CONFIG.SERVICE.AUTH.CODE}
+      URL: ${CLOUD.CONFIG.SERVICE.AUTH.CODE}
+    ROOT:
+      PATH: ${CLOUD.CONFIG.ROOT.PATH}        
+ 
