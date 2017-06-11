@@ -12,3 +12,44 @@ cp $WORKSPACE/src/main/resources/deployment/Dockerfile $WORKSPACE/target/
 cp $WORKSPACE/src/main/resources/deployment/ansible.yml $WORKSPACE/target/
 
 ansible-playbook $WORKSPACE/target/ansible.yml
+
+
+
+# create Apache Active Directory (LDAP SERVER) docker container
+docker run -h 10.39.101.226  -e SERVICE_NAME=apache.directory.server -d -p 10389:10389 --name ds.server enschede/apache-directory-server
+
+# create Redis Server docker container
+docker run -h 10.39.101.226  -e SERVICE_NAME=redis.server  -d -p 6379:6379 -v /docker/redis/redis.conf:/usr/local/etc/redis/redis.conf --name redis.server 10.39.101.226:5000/redis redis-server /usr/local/etc/redis/redis.conf
+
+# create Security Server docker-container;
+docker run -h 10.39.101.226 -d -p 8099:8080 --name cloud.security.service -e SERVICE_NAME=cloud.security.service -v /AppConfig/test/tomcat.conf:/usr/local/tomcat/conf 10.39.101.226:5000/tomcat
+
+ 
+# JVM Variables
+CONFIG.SERVER.AUTH.CODE=AUTHCODE-0001
+CONFIG.SERVER.URL=http://10.39.101.226:6069/cloud-config-server/GetConfigFile
+CONFIG.SERVER.ROOT.PATH=/AppConfig/dev
+
+
+#Properties file path in Config Server
+/cloud.security.server.properties 
+/cloud.security.server.cache.xml
+/cloud.security.client.properties ### for security client
+#Jenkins 
+
+1. define Propagate environment variables:
+  mvn=/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/Maven3.3.9/bin/mvn
+  docker=/var/jenkins_home/tools/org.jenkinsci.plugins.docker.commons.tools.DockerTool/Docker/bin/docker
+2. shell script:
+$mvn clean
+$mvn package 
+$docker -H 10.39.101.226:2375 cp $WORKSPACE/target/cloud-config-server.war cloud.config.server:usr/local/tomcat/webapps
+$docker -H 10.39.101.226:2375 restart cloud.config.server
+
+ 
+
+
+
+
+
+ 
