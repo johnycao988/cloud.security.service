@@ -1,9 +1,8 @@
 package com.cly.security.server;
  
-import java.util.Properties; 
-import org.apache.logging.log4j.LogManager; 
-import org.apache.logging.log4j.core.config.ConfigurationSource;
-import org.apache.logging.log4j.core.config.Configurator;
+import java.util.Properties;
+
+import org.apache.log4j.xml.DOMConfigurator; 
 
 import com.cly.cache.CacheMgr;
 import com.cly.cache.KeyValue;
@@ -173,13 +172,21 @@ public class SecurityServiceMgr {
 
 		try {
 
-			LogManager.shutdown();
+			
+/*
+ * Log4j2
+ *
+  			LogManager.shutdown();
 
 			ConfigurationSource cs = new ConfigurationSource(
 					ConfigClient.getInputStream("/cloud.security/cloud.security.server.log4j.xml"));
-
+			
 			Configurator.initialize(null, cs);
+			
+			log4j2 */ 
 
+			DOMConfigurator.configure(ConfigClient.getDocuement("/cloud.security/cloud.security.server.log4j.xml").getDocumentElement());
+			
 	 
 		} catch (Exception e) {
 
