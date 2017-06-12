@@ -22,7 +22,9 @@ public class SysRest {
 
 	@RequestMapping("/health")
 	public String health() {
-		return "Health check ok";
+		
+		Application.getLogger().info("Health check.");
+		return "{\"status\":\"UP\"}";
 	}
 
 }
