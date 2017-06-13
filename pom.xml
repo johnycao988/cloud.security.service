@@ -37,7 +37,7 @@
 		<dependency>
 			<groupId>com.cly</groupId>
 			<artifactId>comm-lib</artifactId>
-			<version>1.43</version>
+			<version>1.44</version>
 		</dependency>
 
 		<!-- log4j2 <dependency> <groupId>org.springframework.boot</groupId> <artifactId>spring-boot-starter-log4j2</artifactId> 
