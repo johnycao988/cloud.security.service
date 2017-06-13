@@ -128,7 +128,7 @@ public class SecurityServiceMgr {
 
 			Application.getLogger().info("Initializing Properties...");
 
-			securityProperties = ConfigClient.getProperties("/cloud.security/cloud.security.server.properties");
+			securityProperties = ConfigClient.getProperties("cloud.security.server.properties");
 
 		} catch (Exception e) {
 
@@ -142,7 +142,7 @@ public class SecurityServiceMgr {
 
 			Application.getLogger().info("Initializing Cache...");
 
-			CacheMgr.init(ConfigClient.getInputStream("/cloud.security/cloud.security.server.cache.xml"));
+			CacheMgr.init(ConfigClient.getInputStream("cloud.security.server.cache.xml"));
 
 		} catch (Exception e) {
 
@@ -159,7 +159,7 @@ public class SecurityServiceMgr {
 
 			ErrorHandlerMgr.clear();
 			ErrorHandlerMgr
-					.addConfigFile(ConfigClient.getInputStream("/cloud.security/cloud.security.err.handler.xml"));
+					.addConfigFile(ConfigClient.getInputStream("cloud.security.err.handler.xml"));
 		} catch (Exception e) {
 
 			Application.getLogger().error("Init error handler:", e);
@@ -185,7 +185,7 @@ public class SecurityServiceMgr {
 			
 			log4j2 */ 
 
-			DOMConfigurator.configure(ConfigClient.getDocuement("/cloud.security/cloud.security.server.log4j.xml").getDocumentElement());
+			DOMConfigurator.configure(ConfigClient.getDocuement("cloud.security.server.log4j.xml").getDocumentElement());
 			
 	 
 		} catch (Exception e) {
