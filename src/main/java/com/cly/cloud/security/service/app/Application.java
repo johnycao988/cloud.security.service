@@ -81,9 +81,7 @@ public class Application   {
 	public static Logger getLogger(){
 		
 		 
-		Logger logger= LoggingManager.getLogger("cloud.security.service"); 
-		
-		System.out.println(logger);
+		Logger logger= LoggingManager.getLogger("cloud.security.service");  
 		
 		return logger;
 		
