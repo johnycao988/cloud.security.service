@@ -30,21 +30,13 @@ public class User {
 
  
 
-	public String authAccessPermmison(HttpServletRequest request, String jsonMsg) {
-
-		infoRequest(request, jsonMsg);
-
+	public String authAccessPermmison(HttpServletRequest request, String jsonMsg) { 
+	  
 		return validate(jsonMsg, true);
 
 	}
 
-	private void infoRequest(HttpServletRequest request, String info) {
 
-		String sm = "A request from " + request.getRemoteHost() + ":" + info;
-
-		Application.getLogger().info(sm);
-
-	}
 
 	private String validate(String jsonMsg, boolean bAuthAccessPermmison) {
 
@@ -108,8 +100,7 @@ public class User {
 
 	public String validate(HttpServletRequest request, String jsonMsg) {
 
-		this.infoRequest(request, jsonMsg);
-		return validate(jsonMsg, false);
+	 	return validate(jsonMsg, false);
 
 	}
 
@@ -117,8 +108,7 @@ public class User {
 
 		try {
 
-			this.infoRequest(request, jsonMsg);
-
+	 
 			JSONObject msg = JSONObject.fromObject(jsonMsg);
 
 			String inqAuthCode = JSONUtil.getString(msg, SecuConst.AUTH_INQ_CODE);
@@ -141,8 +131,7 @@ public class User {
 	public void directPageLogin(HttpServletRequest request, HttpServletResponse response, String userId, String userPwd,
 			String redirectUrl) throws IOException {
 
-		this.infoRequest(request, "Login - User Id:" + userId + " Redirect page url:" + redirectUrl);
-
+	
 		JSONResult jr = new JSONResult(login(userId, userPwd, redirectUrl));
 		if (jr.isSuccess()) {
 
@@ -160,9 +149,7 @@ public class User {
 
 	public String pageLogin(HttpServletRequest request, String userId, String userPwd, String redirectUrl) {
 
-		this.infoRequest(request, "page login - User Id:" + userId);
-
-		return login(userId, userPwd, redirectUrl);
+	 	return login(userId, userPwd, redirectUrl);
 	}
 
 	public String msgLogin(HttpServletRequest request, String jsonMsg) {
@@ -170,9 +157,7 @@ public class User {
 		JSONObject msg = JSONObject.fromObject(jsonMsg);
 
 		String userId = JSONUtil.getString(msg, SecuConst.USER_ID);
-
-		this.infoRequest(request, " login msg - User Id:" + userId);
-
+	 
 		String userPwd = JSONUtil.getString(msg, SecuConst.USER_PW);
 
 		String redirectUrl = JSONUtil.getString(msg, SecuConst.AUTH_REDIRECT_URL);
