@@ -61,11 +61,9 @@ public class Application   {
 
 	public void init(){
 		 
-		String configAuthCode = env.getProperty(ConfigClient.AUTH_CODE);
-		String configServerUrl = env.getProperty(ConfigClient.CONFIG_SERVICE_URL);
-		String rootConfigPath = env.getProperty(ConfigClient.ROOT_CONFIG_PATH);
-
-		ConfigClient.init(configAuthCode, configServerUrl, rootConfigPath);
+		ClientAppProperties ca=new ClientAppProperties(this.env);
+		
+		ConfigClient.init(ca);
 		
 		SecurityServiceMgr.init();
 	}
