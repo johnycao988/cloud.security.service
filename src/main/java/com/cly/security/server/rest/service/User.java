@@ -52,7 +52,7 @@ public class User {
 
 			UserInfo ui = this.getCacheUserInfo(authCode);
 
-			if (!ui.getUserId().equals(userId) && !ui.getAuthCode().equals(authCode)) {
+			if (!ui.getUserId().equals(userId) || !ui.getAuthCode().equals(authCode)) {
 
 				String errCode = "SECU-00001";
 				throw new SecurityAuthException(errCode, eh.getErrorMessage(errCode));
@@ -75,6 +75,8 @@ public class User {
 
 		String[] grpList = ui.getUserGroups();
 
+		Application.getLogger().debug("User group list {}",grpList.toString());
+		
 		if (grpList != null && grpList.length > 0 && ja != null && ja.size() > 0) {
 
 			for (int i = 0; i < ja.size(); i++) {
