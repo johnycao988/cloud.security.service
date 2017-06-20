@@ -40,8 +40,7 @@ public class LDAPUserInfoService implements UserInfoService {
 			String slUserName = atr.get(this.ldapUserName).get().toString();
  
 			UserInfoImpl ui = new UserInfoImpl();
-			ui.setUserId(userId);
-			ui.setUserPassword(userPwd);
+			ui.setUserId(userId); 
 			ui.setUserName(slUserName);
 			ui.setAuthCode(IDUtil.getRandomBase64UUID());
 			ui.setUserGroups(this.getUserGroups(ldapSearch,userId));
@@ -141,8 +140,6 @@ class UserInfoImpl implements UserInfo, Serializable {
 
 	private String authCode;
 
-	private String userPwd;
-
 	private String[] listGrp;
 
 	@Override
@@ -176,18 +173,13 @@ class UserInfoImpl implements UserInfo, Serializable {
 		this.listGrp = listGrp;
 	}
 
-	public void setUserPassword(String userPwd) {
-		this.userPwd = userPwd;
-	}
+
 
 	@Override
 	public String[] getUserGroups() {
 		return listGrp;
 	}
+	 
 
-	@Override
-	public String getUserPassword() { 
-		return userPwd;
-	}
 
 }

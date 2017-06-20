@@ -2,9 +2,8 @@ package com.cly.security.server.rest.service;
 
 import java.io.IOException;
 
- 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse; 
+import javax.servlet.http.HttpServletResponse;
 
 import com.cly.cache.CacheMgr;
 import com.cly.cache.KeyValue;
@@ -13,7 +12,7 @@ import com.cly.comm.util.IDUtil;
 import com.cly.comm.util.JSONResult;
 import com.cly.comm.util.JSONUtil;
 import com.cly.err.ErrorHandler;
-import com.cly.err.ErrorHandlerMgr;  
+import com.cly.err.ErrorHandlerMgr;
 import com.cly.security.server.SecurityServiceMgr;
 
 import net.sf.ehcache.Cache;
@@ -25,18 +24,13 @@ import com.cly.security.SecuConst;
 import com.cly.security.SecurityAuthException;
 import com.cly.security.UserInfo;
 
- 
 public class User {
 
- 
+	public String authAccessPermmison(HttpServletRequest request, String jsonMsg) {
 
-	public String authAccessPermmison(HttpServletRequest request, String jsonMsg) { 
-	  
 		return validate(jsonMsg, true);
 
 	}
-
-
 
 	private String validate(String jsonMsg, boolean bAuthAccessPermmison) {
 
@@ -50,7 +44,7 @@ public class User {
 
 			String authCode = JSONUtil.getString(msg, SecuConst.AUTH_CODE);
 
-			UserInfo ui = this.getCacheUserInfo(authCode);
+			UserInfo ui = this.getUserInfoFromCache(authCode);
 
 			if (!ui.getUserId().equals(userId) || !ui.getAuthCode().equals(authCode)) {
 
@@ -75,8 +69,6 @@ public class User {
 
 		String[] grpList = ui.getUserGroups();
 
-		Application.getLogger().debug("User group list {}",grpList.toString());
-		
 		if (grpList != null && grpList.length > 0 && ja != null && ja.size() > 0) {
 
 			for (int i = 0; i < ja.size(); i++) {
@@ -102,7 +94,7 @@ public class User {
 
 	public String validate(HttpServletRequest request, String jsonMsg) {
 
-	 	return validate(jsonMsg, false);
+		return validate(jsonMsg, false);
 
 	}
 
@@ -110,14 +102,13 @@ public class User {
 
 		try {
 
-	 
 			JSONObject msg = JSONObject.fromObject(jsonMsg);
 
 			String inqAuthCode = JSONUtil.getString(msg, SecuConst.AUTH_INQ_CODE);
 
 			String authCode = this.getAuthCodeFromKV(inqAuthCode);
 
-			UserInfo ui = this.getCacheUserInfo(authCode);
+			UserInfo ui = this.getUserInfoFromCache(authCode);
 
 			JSONObject jr = JSONUtil.initSuccess();
 			jr.put(SecuConst.AUTH_CODE, ui.getAuthCode());
@@ -133,7 +124,6 @@ public class User {
 	public void directPageLogin(HttpServletRequest request, HttpServletResponse response, String userId, String userPwd,
 			String redirectUrl) throws IOException {
 
-	
 		JSONResult jr = new JSONResult(login(userId, userPwd, redirectUrl));
 		if (jr.isSuccess()) {
 
@@ -151,7 +141,7 @@ public class User {
 
 	public String pageLogin(HttpServletRequest request, String userId, String userPwd, String redirectUrl) {
 
-	 	return login(userId, userPwd, redirectUrl);
+		return login(userId, userPwd, redirectUrl);
 	}
 
 	public String msgLogin(HttpServletRequest request, String jsonMsg) {
@@ -159,7 +149,7 @@ public class User {
 		JSONObject msg = JSONObject.fromObject(jsonMsg);
 
 		String userId = JSONUtil.getString(msg, SecuConst.USER_ID);
-	 
+
 		String userPwd = JSONUtil.getString(msg, SecuConst.USER_PW);
 
 		String redirectUrl = JSONUtil.getString(msg, SecuConst.AUTH_REDIRECT_URL);
@@ -168,7 +158,7 @@ public class User {
 
 	}
 
-	private void setCacheUserInfo(UserInfo ui, boolean bUpdateKV) throws SecurityAuthException {
+	private void putUserInfoToCache(UserInfo ui, boolean bUpdateKV) throws SecurityAuthException {
 
 		if (ui == null)
 			return;
@@ -187,7 +177,7 @@ public class User {
 
 	}
 
-	private UserInfo getCacheUserInfo(String authCode) throws SecurityAuthException {
+	private UserInfo getUserInfoFromCache(String authCode) throws SecurityAuthException {
 
 		Cache sessCache = CacheMgr.getCache(SecuConst.AUTH_CODE_CACHE);
 
@@ -206,7 +196,7 @@ public class User {
 
 			if (sui != null) {
 				ui = new SessionUserInfo(sui);
-				this.setCacheUserInfo(ui, false);
+				this.putUserInfoToCache(ui, false);
 			}
 		}
 
@@ -259,7 +249,9 @@ public class User {
 
 			SessionUserInfo sui = new SessionUserInfo(ui);
 
-			this.setCacheUserInfo(sui, true);
+			Application.getLogger().debug("Login OK-User Info:{}", sui.toString());
+
+			this.putUserInfoToCache(sui, true);
 
 			String inqCode = IDUtil.getRandomBase64UUID();
 
@@ -294,12 +286,10 @@ class SessionUserInfo implements UserInfo {
 	private String userName;
 	private String authCode;
 	private String[] grpList;
-	private String userPwd;
 
 	public SessionUserInfo(UserInfo ui) {
 
 		this.userId = ui.getUserId();
-		this.userPwd = ui.getUserPassword();
 		this.userName = ui.getUserName();
 		this.authCode = ui.getAuthCode();
 		this.grpList = ui.getUserGroups();
@@ -326,6 +316,14 @@ class SessionUserInfo implements UserInfo {
 		jo.put(SecuConst.USER_ID, this.userId);
 		jo.put(SecuConst.USER_NAME, this.userName);
 		jo.put(SecuConst.AUTH_CODE, this.authCode);
+		JSONArray ja = new JSONArray();
+
+		if (this.getUserGroups() != null)
+			for (String s : this.getUserGroups())
+				ja.add(s);
+
+		jo.put(SecuConst.AUTH_USER_GROUPS, ja);
+
 		return jo.toString();
 
 	}
@@ -351,12 +349,6 @@ class SessionUserInfo implements UserInfo {
 	@Override
 	public String[] getUserGroups() {
 		return this.grpList;
-	}
-
-	@Override
-	public String getUserPassword() {
-		// TODO Auto-generated method stub
-		return this.userPwd;
 	}
 
 }
