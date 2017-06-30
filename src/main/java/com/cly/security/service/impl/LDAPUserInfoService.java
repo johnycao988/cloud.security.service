@@ -9,6 +9,7 @@ import javax.naming.directory.SearchControls;
 
 import com.cly.cache.CacheMgr;
 import com.cly.cache.KeyValue;
+import com.cly.cloud.security.service.app.Application;
 import com.cly.comm.util.IDUtil;
 import com.cly.err.ErrorHandler;
 import com.cly.err.ErrorHandlerMgr;
@@ -149,6 +150,8 @@ public class LDAPUserInfoService implements UserAuthService {
 		Cache sessCache = CacheMgr.getCache(SecuConst.AUTH_CODE_CACHE);
 
 		sessCache.put(new Element(ui.getAuthCode(), ui));
+		
+		Application.getLogger().debug("Put User Info to Cache:"+ui.toString());
 
 	}
 
@@ -172,14 +175,19 @@ public class LDAPUserInfoService implements UserAuthService {
 
 		Element eu = sessCache.get(authCode);
 
-		if (eu != null)
+		if (eu != null){
+		
 			ui = (UserInfo) eu.getObjectValue();
+			Application.getLogger().debug("Get User Info from Session OK:"+ui.toString());
+		}
 
 		if (ui == null) {
 
 			KeyValue kvs = SecurityServiceMgr.getKVService();
 
 			String sui = kvs.get(SecuConst.AUTH_KV_AUTHCODE);
+			
+			Application.getLogger().debug("Get User Info from KV:"+sui);
 
 			if (sui != null) {
 				ui = new UserInfo(JSONObject.fromObject(sui));
@@ -188,6 +196,9 @@ public class LDAPUserInfoService implements UserAuthService {
 		}
 
 		if (ui == null) {
+			
+			Application.getLogger().debug("Can't get User Info");
+			
 			String errCode = "SECU-00004";
 			ErrorHandler eh = ErrorHandlerMgr.getErrorHandler();
 			throw new SecurityAuthException(errCode, eh.getErrorMessage(errCode));
