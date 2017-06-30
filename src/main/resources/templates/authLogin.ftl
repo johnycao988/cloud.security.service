@@ -39,9 +39,9 @@
         <input type="hidden" name="authRedirectUrl" value="${(authRedirectUrl)!}">
         <h2 class="form-signin-heading">Please sign in</h2>
         <label for="userId" class="sr-only">User Id</label>
-        <input type="text" name="userId" class="form-control" placeholder="User Id" required autofocus>
-        <label for="inputPassword" class="sr-only">Password</label>
-        <input type="password" name="userPwd" class="form-control" placeholder="Password" required>
+        <input type="text" id="userId" name="userId" class="form-control" placeholder="User Id" required autofocus>
+        <label for="userPwd"  class="sr-only">Password</label>
+        <input type="password" id="userPwd" name="userPwd" class="form-control" placeholder="Password" required>
         <div class="checkbox">
           <label>
             <input type="checkbox" value="remember-me"> Remember me
