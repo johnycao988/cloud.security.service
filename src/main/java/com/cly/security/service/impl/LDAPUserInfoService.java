@@ -1,6 +1,5 @@
 package com.cly.security.service.impl;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Properties;
 import javax.naming.NamingException;
@@ -8,44 +7,59 @@ import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchControls;
 
+import com.cly.cache.CacheMgr;
+import com.cly.cache.KeyValue;
 import com.cly.comm.util.IDUtil;
+import com.cly.err.ErrorHandler;
+import com.cly.err.ErrorHandlerMgr;
 import com.cly.ldap.LDAPContext;
-import com.cly.ldap.LDAPSearch; 
+import com.cly.ldap.LDAPSearch;
+import com.cly.security.AuthPermission;
+import com.cly.security.PermissionAuthResult;
+import com.cly.security.SecuConst;
 import com.cly.security.SecurityAuthException;
 import com.cly.security.UserInfo;
-import com.cly.security.UserInfoService;
+import com.cly.security.server.SecurityServiceMgr;
 
-public class LDAPUserInfoService implements UserInfoService {
+import net.sf.ehcache.Cache;
+import net.sf.ehcache.Element;
+import net.sf.json.JSONObject;
+
+import com.cly.security.UserAuthService;
+
+public class LDAPUserInfoService implements UserAuthService {
 
 	private String ldapUserinfoSearchbase;
 	private String ldapUserName;
-
 	private String ldapUserGrpId;
 	private String ldapUserGrpUserId;
 	private String ldapUserGrpSearchbase;
 	private String ldapUserId;
 
- 	private LDAPContext ldapCtx;
+	private LDAPContext ldapCtx;
 
 	@Override
 	public UserInfo login(String userId, String userPwd) throws SecurityAuthException {
 
 		try {
 
-	    	LDAPSearch ldapSearch = this.getLDAPSearch(userId, userPwd);
-			
+			LDAPSearch ldapSearch = this.getLDAPSearch(userId, userPwd);
+
 			Attributes atr = ldapSearch.search(ldapUserinfoSearchbase, ldapUserId + "=" + userId,
-					SearchControls.SUBTREE_SCOPE); 
-		 
+					SearchControls.SUBTREE_SCOPE);
+
 			String slUserName = atr.get(this.ldapUserName).get().toString();
- 
-			UserInfoImpl ui = new UserInfoImpl();
-			ui.setUserId(userId); 
-			ui.setUserName(slUserName);
-			ui.setAuthCode(IDUtil.getRandomBase64UUID());
-			ui.setUserGroups(this.getUserGroups(ldapSearch,userId));
+
+			UserInfo ui = new UserInfo(userId, slUserName, IDUtil.getRandomBase64UUID(),
+					this.getUserGroups(ldapSearch, userId));
+
+			SecurityServiceMgr.getKVService().set(SecuConst.AUTH_KV_AUTHCODE + ui.getAuthCode(), ui.toString(),
+					30 * 60);
+
+			this.setUserInfoToCache(ui);
 
 			return ui;
+
 		} catch (SecurityAuthException se) {
 			throw se;
 		} catch (NamingException ne) {
@@ -53,9 +67,9 @@ public class LDAPUserInfoService implements UserInfoService {
 		}
 	}
 
-	private String[] getUserGroups(LDAPSearch ldapSearch,String userId) throws NamingException {
+	private String[] getUserGroups(LDAPSearch ldapSearch, String userId) throws NamingException {
 
-		ArrayList<String> grpList = new ArrayList<String>(); 
+		ArrayList<String> grpList = new ArrayList<String>();
 
 		Attributes[] atrs = ldapSearch.multiSearch(this.ldapUserGrpSearchbase, this.ldapUserGrpId + "=*",
 				SearchControls.SUBTREE_SCOPE);
@@ -92,8 +106,8 @@ public class LDAPUserInfoService implements UserInfoService {
 		this.ldapUserGrpSearchbase = prop.getProperty("ldap.user.group.search.base");
 		this.ldapUserGrpId = LDAPContext.getAttributeMapping(prop, "group.id");
 		this.ldapUserGrpUserId = LDAPContext.getAttributeMapping(prop, "group.user.id");
-		ldapUserId=LDAPContext.getAttributeMapping(prop,"user.id");
-		
+		ldapUserId = LDAPContext.getAttributeMapping(prop, "user.id");
+
 		ldapCtx = new LDAPContext();
 
 		ldapCtx.setFactory(prop.getProperty("ldap.initial.context.factory"))
@@ -106,9 +120,9 @@ public class LDAPUserInfoService implements UserInfoService {
 
 		try {
 
-			LDAPContext ctx = new LDAPContext(this.ldapCtx.getProperties()); 
-		 	
-			String ui=this.ldapUserId+"="+userId+","+this.ldapUserinfoSearchbase;			
+			LDAPContext ctx = new LDAPContext(this.ldapCtx.getProperties());
+
+			String ui = this.ldapUserId + "=" + userId + "," + this.ldapUserinfoSearchbase;
 
 			ctx.setUser(ui);
 
@@ -119,67 +133,135 @@ public class LDAPUserInfoService implements UserInfoService {
 			return ldapSearch;
 		} catch (Exception e) {
 
-			throw new SecurityAuthException(e, "", "Invalidate User Id or Password.");
-
+			String errCode = "SECU-00001";
+			ErrorHandler eh = ErrorHandlerMgr.getErrorHandler();
+			throw new SecurityAuthException(errCode, eh.getErrorMessage(errCode));
+ 
 		}
 
 	}
 
-}
+	private void setUserInfoToCache(UserInfo ui) {
 
-class UserInfoImpl implements UserInfo, Serializable {
+		if (ui == null)
+			return;
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+		Cache sessCache = CacheMgr.getCache(SecuConst.AUTH_CODE_CACHE);
 
-	private String userId;
+		sessCache.put(new Element(ui.getAuthCode(), ui));
 
-	private String userName;
+	}
 
-	private String authCode;
+	private void deleteUserInfo(UserInfo ui) throws SecurityAuthException {
 
-	private String[] listGrp;
+		Cache sessCache = CacheMgr.getCache(SecuConst.AUTH_CODE_CACHE);
 
-	@Override
-	public String getUserId() {
-		return this.userId;
+		Element eu = sessCache.get(ui.getAuthCode());
+
+		sessCache.removeElement(eu);
+
+		SecurityServiceMgr.getKVService().delete(SecuConst.AUTH_KV_AUTHCODE + ui.getAuthCode());
+
+	}
+
+	private UserInfo getUserInfo(String authCode) throws SecurityAuthException {
+
+		Cache sessCache = CacheMgr.getCache(SecuConst.AUTH_CODE_CACHE);
+
+		UserInfo ui = null;
+
+		Element eu = sessCache.get(authCode);
+
+		if (eu != null)
+			ui = (UserInfo) eu.getObjectValue();
+
+		if (ui == null) {
+
+			KeyValue kvs = SecurityServiceMgr.getKVService();
+
+			String sui = kvs.get(SecuConst.AUTH_KV_AUTHCODE);
+
+			if (sui != null) {
+				ui = new UserInfo(JSONObject.fromObject(sui));
+				this.setUserInfoToCache(ui);
+			}
+		}
+
+		if (ui == null) {
+			String errCode = "SECU-00004";
+			ErrorHandler eh = ErrorHandlerMgr.getErrorHandler();
+			throw new SecurityAuthException(errCode, eh.getErrorMessage(errCode));
+		}
+
+		return ui;
 	}
 
 	@Override
-	public String getUserName() {
-		return this.userName;
+	public boolean logout(String userId, String authCode) throws SecurityAuthException {
+
+		UserInfo ui = this.getUserInfo(authCode);
+
+		if (ui != null && ui.getUserId() != null && ui.getUserId().equals(userId)) {
+
+			deleteUserInfo(ui);
+
+			return true;
+		}
+
+		return false;
 	}
 
 	@Override
-	public String getAuthCode() {
-		return this.authCode;
+	public boolean authenticate(String userId, String authCode) throws SecurityAuthException {
+
+		UserInfo ui = this.getUserInfo(authCode);
+
+		if (ui != null && ui.getUserId().equals(userId))
+			return true;
+
+		return false;
 	}
 
-	public void setUserId(String userId) {
-		this.userId = userId;
+	private AuthPermission checkPermission(String permissionName, UserInfo ui) {
+
+		boolean bPermitted = false;
+
+		if (ui.getUserGroups() != null)
+			for (String sg : ui.getUserGroups()) {
+				if (sg.equals(permissionName)) {
+					bPermitted = true;
+					break;
+				}
+
+			}
+
+		return new AuthPermission(permissionName, bPermitted);
+
 	}
-
-	public void setUserName(String userName) {
-		this.userName = userName;
-	}
-
-	public void setAuthCode(String authCode) {
-		this.authCode = authCode;
-	}
-
-	public void setUserGroups(String[] listGrp) {
-		this.listGrp = listGrp;
-	}
-
-
 
 	@Override
-	public String[] getUserGroups() {
-		return listGrp;
-	}
-	 
+	public PermissionAuthResult authPermissions(String userId, String authCode, String[] authPermissionNames)
+			throws SecurityAuthException {
 
+		UserInfo ui = this.getUserInfo(authCode);
+
+		if (ui != null && ui.getUserId().equals(userId)) {
+
+			ArrayList<AuthPermission> alList = new ArrayList<AuthPermission>();
+
+			for (String spn : authPermissionNames) {
+				alList.add(checkPermission(spn, ui));
+			}
+
+			return new PermissionAuthResult(alList);
+
+		} else {
+			String errCode = "SECU-00004";
+			ErrorHandler eh = ErrorHandlerMgr.getErrorHandler();
+			throw new SecurityAuthException(errCode, eh.getErrorMessage(errCode));
+
+		}
+
+	}
 
 }

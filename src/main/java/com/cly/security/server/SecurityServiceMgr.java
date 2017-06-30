@@ -12,13 +12,13 @@ import com.cly.err.ErrorHandler;
 import com.cly.err.ErrorHandlerMgr;
 import com.cly.logging.LoggingManager;
 import com.cly.security.SecurityAuthException;
-import com.cly.security.UserInfoService;
+import com.cly.security.UserAuthService;
 
 public class SecurityServiceMgr {
 
 	private static Properties securityProperties = null;
 
-	private static UserInfoService userInfoService = null;
+	private static UserAuthService userInfoService = null;
 
 	private static KeyValue kvService;
 
@@ -40,11 +40,11 @@ public class SecurityServiceMgr {
 		return "Security Server Refresh completed.";
 	}
 
-	public static UserInfoService getUserInfoService() throws SecurityAuthException {
+	public static UserAuthService getAuthUserService() throws SecurityAuthException {
 
 		if (userInfoService == null) {
 
-			userInfoService = (UserInfoService) createServiceInstance("cloud.security.userinfo.service");
+			userInfoService = (UserAuthService) createServiceInstance("cloud.security.userinfo.service");
 
 			userInfoService.initProperties(getProperties());
 
