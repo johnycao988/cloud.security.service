@@ -185,9 +185,9 @@ public class LDAPUserInfoService implements UserAuthService {
 
 			KeyValue kvs = SecurityServiceMgr.getKVService();
 
-			String sui = kvs.get(SecuConst.AUTH_KV_AUTHCODE);
+			String sui = kvs.get(SecuConst.AUTH_KV_AUTHCODE+authCode);
 			
-			Application.getLogger().debug("Get User Info from KV:"+sui);
+			Application.getLogger().debug("Get User Info from KV:"+sui );
 
 			if (sui != null) {
 				ui = new UserInfo(JSONObject.fromObject(sui));
