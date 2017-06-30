@@ -29,7 +29,6 @@ public class UserRest {
 	private static final String REQ_URI_INQ_AUTH_CODE = "/inqAuthCode";
 	private static final String REQ_URI_REDIRECT_PAGE_LOGIN = "/redirectPageLogin";
 	private static final String REQ_URI_MSG_LOGIN = "/msgLogin";
-	private static final String REQ_URI_PAGE_LOGIN = "/pageLogin";
 
 	private void infoRequestMsg(HttpServletRequest request, String requestUri, String msgInfo) {
 
@@ -148,7 +147,7 @@ public class UserRest {
 
 		String key = SecuConst.AUTH_KV_INQ_AUTHCODE + inqAuthCode;
 
-		SecurityServiceMgr.getKVService().set(key, ui.toString());
+		SecurityServiceMgr.getKVService().set(key, ui.toString(),10);
 
 		String url = redirectUrl + "?" + SecuConst.AUTH_INQ_CODE + "=" + inqAuthCode;
 
@@ -203,27 +202,6 @@ public class UserRest {
 		infoResponseMsg(request, REQ_URI_MSG_LOGOUT, rtnMsg);
 
 		return rtnMsg;
-	}
-
-	@RequestMapping(value = REQ_URI_PAGE_LOGIN, method = RequestMethod.POST)
-	public String pageLogin(HttpServletRequest request, @RequestParam(SecuConst.USER_ID) String userId,
-			@RequestParam(SecuConst.USER_PW) String userPwd) throws IOException, SecurityAuthException {
-
-		infoRequestMsg(request, REQ_URI_PAGE_LOGIN, "User id:" + userId);
-
-		UserInfo ui = SecurityServiceMgr.getAuthUserService().login(userId, userPwd);
-
-		JSONObject jr = JSONUtil.initSuccess();
-
-		jr.put(SecuConst.AUTH_CODE, ui.getAuthCode());
-		jr.put(SecuConst.USER_ID, ui.getUserId());
-
-		String rtnMsg = jr.toString();
-
-		infoResponseMsg(request, REQ_URI_MSG_LOGIN, rtnMsg);
-
-		return rtnMsg;
-
 	}
 
 }
